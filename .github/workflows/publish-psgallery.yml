@@ -1,0 +1,58 @@
+name: Publish CommandNavigator to PowerShell Gallery
+
+on:
+  push:
+    branches:
+      - release
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-commandnavigator
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Stage and validate module
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $source = '${{ github.workspace }}'
+          $stage = Join-Path $env:RUNNER_TEMP 'CommandNavigator'
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+
+          $files = @('CommandNavigator.psm1', 'CommandNavigator.psd1', 'commands.json', 'settings.json')
+          foreach ($file in $files) {
+            $from = Join-Path $source $file
+            if (-not (Test-Path -LiteralPath $from -PathType Leaf)) {
+              throw "Missing module file: $file"
+            }
+            Copy-Item -LiteralPath $from -Destination $stage -ErrorAction Stop
+          }
+
+          $manifest = Test-ModuleManifest (Join-Path $stage 'CommandNavigator.psd1') -ErrorAction Stop
+          if ($manifest.Name -ne 'CommandNavigator') { throw 'Unexpected module name.' }
+          Write-Host "Validated CommandNavigator $($manifest.Version)"
+
+          # Check JSON syntax (does not execute commands).
+          foreach ($file in @('commands.json', 'settings.json')) {
+            $null = Get-Content (Join-Path $stage $file) -Raw | ConvertFrom-Json -ErrorAction Stop
+          }
+
+      - name: Publish to PSGallery
+        shell: pwsh
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:PSGALLERY_API_KEY) { throw 'PSGALLERY_API_KEY secret is missing.' }
+          $stage = Join-Path $env:RUNNER_TEMP 'CommandNavigator'
+          Import-Module Microsoft.PowerShell.PSResourceGet -ErrorAction Stop
+          Publish-PSResource -Path $stage -Repository PSGallery -ApiKey $env:PSGALLERY_API_KEY -ErrorAction Stop
