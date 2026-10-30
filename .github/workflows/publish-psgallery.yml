@@ -49,18 +49,24 @@ jobs:
       - name: Auto-increment module version
         shell: pwsh
         run: |
-          $modulePath = "./release/CommandNavigator/CommandNavigator.psd1"
+          $ErrorActionPreference = 'Stop'
+
+          $modulePath = Join-Path $env:RUNNER_TEMP 'CommandNavigator/CommandNavigator.psd1'
 
           $latest = Find-PSResource -Name CommandNavigator -Repository PSGallery |
             Sort-Object Version -Descending |
             Select-Object -First 1
+
+          if (-not $latest) {
+            throw 'No published CommandNavigator version found.'
+          }
 
           $version = [version]$latest.Version
           $newVersion = "$($version.Major).$($version.Minor).$($version.Build + 1)"
 
           Update-ModuleManifest -Path $modulePath -ModuleVersion $newVersion
 
-          Write-Host "Publishing version $newVersion"
+          Test-ModuleManifest $modulePath -ErrorAction Stop | Out-Null
           
       - name: Publish to PSGallery
         shell: pwsh
