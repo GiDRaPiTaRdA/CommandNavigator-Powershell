@@ -46,6 +46,22 @@ jobs:
             $null = Get-Content (Join-Path $stage $file) -Raw | ConvertFrom-Json -ErrorAction Stop
           }
 
+      - name: Auto-increment module version
+        shell: pwsh
+        run: |
+          $modulePath = "./release/CommandNavigator/CommandNavigator.psd1"
+
+          $latest = Find-PSResource -Name CommandNavigator -Repository PSGallery |
+            Sort-Object Version -Descending |
+            Select-Object -First 1
+
+          $version = [version]$latest.Version
+          $newVersion = "$($version.Major).$($version.Minor).$($version.Build + 1)"
+
+          Update-ModuleManifest -Path $modulePath -ModuleVersion $newVersion
+
+          Write-Host "Publishing version $newVersion"
+          
       - name: Publish to PSGallery
         shell: pwsh
         env:
