@@ -14,9 +14,10 @@ function cmdnav {
     # Configuration
     $settings = Get-Content (Join-Path $PSScriptRoot $settingsFile) -Raw | ConvertFrom-Json
 
-    $addToHistory = $settings.WriteHistory
+    $addToHistory = $settings.WriteHistory -ne $false
+    $editableCommands = $settings.EditableCommands -ne $false
 
-   # Load commands.json from the script's directory
+    # Load commands.json from the script's directory
     $configPath = Join-Path $PSScriptRoot $commandsFile
 
     if (-not (Test-Path -LiteralPath $configPath)) {
@@ -28,7 +29,7 @@ function cmdnav {
 
     $sharedTree = @(
         Get-Content -LiteralPath $sharedPath -Raw |
-            ConvertFrom-Json -AsHashtable
+        ConvertFrom-Json -AsHashtable
     )
 
     $tree = @()
@@ -39,20 +40,17 @@ function cmdnav {
     if (Test-Path -LiteralPath $projectPath -PathType Leaf) {
         $projectTree = @(
             Get-Content -LiteralPath $projectPath -Raw |
-                ConvertFrom-Json -AsHashtable
+            ConvertFrom-Json -AsHashtable
         )
 
-        $tree += @{
-            Name     = 'Project'
-            Children = $projectTree
-        }
+        $tree += $projectTree
 
         $tree += @{
             Name     = 'System'
             Children = $sharedTree
         }
     }
-    else{
+    else {
         # Always include shared commands
         $tree = $sharedTree
     }
@@ -85,7 +83,8 @@ function cmdnav {
                 if ($i -eq $selection) {
                     $esc = [char]27
                     Write-Host "$esc[30;46m >$line $esc[0m"
-                } else {
+                }
+                else {
                     Write-Host "  $line" -ForegroundColor Gray
                 }
             }
@@ -99,7 +98,7 @@ function cmdnav {
             Write-Host ' Left     parent       Esc or Q     exit'
             $key = [Console]::ReadKey($true)
             switch ($key.Key) {
-                'UpArrow'   { $selection = [Math]::Max(0, $selection - 1) }
+                'UpArrow' { $selection = [Math]::Max(0, $selection - 1) }
                 'DownArrow' { $selection = [Math]::Min([Math]::Max(0, $visible.Count - 1), $selection + 1) }
                 'LeftArrow' {
                     if ($stack.Count) {
@@ -119,7 +118,7 @@ function cmdnav {
                         $filter = ''
                     }
                 }
-                { $_ -in @('Enter','RightArrow') } {
+                { $_ -in @('Enter', 'RightArrow') } {
                     if ($visible.Count) {
                         $node = $visible[$selection]
                         if ($node.ContainsKey('Children')) {
@@ -127,7 +126,8 @@ function cmdnav {
                             $items = $node.Children
                             $selection = 0
                             $filter = ''
-                        } elseif ($key.Key -eq 'Enter') {
+                        }
+                        elseif ($key.Key -eq 'Enter') {
                             $selectedCommand = [string]$node.Command
                             $quit = $true
                         }
@@ -137,83 +137,117 @@ function cmdnav {
                 'Q' { $quit = $true }
             }
         }
-    } finally {
-          # Restore normal screen and show cursor
+    }
+    finally {
+        # Restore normal screen and show cursor
         Write-Host -NoNewline "`e[?25h`e[?1049l"
     }
 
-        if ($selectedCommand) {
-        Write-Host 'Edit command, then press Enter to execute. Esc to cancel.' -ForegroundColor DarkGray
+    if ($selectedCommand) {
+     
 
         $command = [string]$selectedCommand
-        $cursor = $command.Length
-        $prompt = 'PS> '
-        $startX = 0
-        $startY = [Console]::CursorTop
-        $previousLength = 0
 
-        while ($true) {
-            # Redraw the editable command
-            [Console]::SetCursorPosition($startX, $startY)
-            [Console]::Write(
-                $prompt + $command +
-                (' ' * [Math]::Max(0, $previousLength - $command.Length))
-            )
+        # Determine if the command is editable based on the node's 'Editable' property or the default editable commands list
+        $editable = if ($node.Contains('Editable') -and $null -ne $node.Editable) {
+            $node.Editable
+        } 
+        else {
+            $editableCommands
+        }
 
-            $previousLength = $command.Length
+        # Check if the command is editable before entering the editing loop
+        if ($editable) {
 
-            # Position cursor for editing
-            [Console]::SetCursorPosition(
-                $prompt.Length + $cursor,
-                $startY
-            )
+            Write-Host 'Edit command, then press Enter to execute. Esc to cancel.' -ForegroundColor DarkGray
+            $cursor = $command.Length
+            $prompt = 'PS> '
+            $startX = 0
+            $startY = [Console]::CursorTop
+            $previousLength = 0
 
-            $key = [Console]::ReadKey($true)
+            while ($true) {
+                $width = [Console]::BufferWidth
 
-            switch ($key.Key) {
-                'Enter' {
+                # Ensure there is enough space for the command to wrap.
+                $totalLength = $prompt.Length + [Math]::Max($command.Length, $previousLength)
+                $rowsNeeded = [int][Math]::Floor($totalLength / $width) + 1
+
+                if ($startY + $rowsNeeded -gt [Console]::BufferHeight) {
+                    $scroll = $startY + $rowsNeeded - [Console]::BufferHeight
+
+                    [Console]::SetCursorPosition(0, [Console]::BufferHeight - 1)
+                    [Console]::Write("`n" * $scroll)
+
+                    $startY -= $scroll
+                }
+
+                # Redraw the full command, including wrapped lines.
+                [Console]::SetCursorPosition($startX, $startY)
+
+                [Console]::Write(
+                    $prompt + $command +
+                    (' ' * [Math]::Max(0, $previousLength - $command.Length))
+                )
+
+                $previousLength = $command.Length
+
+                # Calculate cursor position across wrapped lines.
+                $position = $startX + $prompt.Length + $cursor
+                $x = $position % $width
+                $y = $startY + [int][Math]::Floor($position / $width)
+
+                [Console]::SetCursorPosition($x, $y)
+
+                # Keep your existing keyboard handling below.
+
+                $key = [Console]::ReadKey($true)
+
+                switch ($key.Key) {
+                    'Enter' {
+                        break
+                    }
+                    'Escape' {
+                        Write-Host ''
+                        return
+                    }
+                    'Backspace' {
+                        if ($cursor -gt 0) {
+                            $command = $command.Remove($cursor - 1, 1)
+                            $cursor--
+                        }
+                    }
+                    'Delete' {
+                        if ($cursor -lt $command.Length) {
+                            $command = $command.Remove($cursor, 1)
+                        }
+                    }
+                    'LeftArrow' {
+                        if ($cursor -gt 0) { $cursor-- }
+                    }
+                    'RightArrow' {
+                        if ($cursor -lt $command.Length) { $cursor++ }
+                    }
+                    'Home' {
+                        $cursor = 0
+                    }
+                    'End' {
+                        $cursor = $command.Length
+                    }
+                    default {
+                        if (-not [char]::IsControl($key.KeyChar)) {
+                            $command = $command.Insert(
+                                $cursor,
+                                [string]$key.KeyChar
+                            )
+                            $cursor++
+                        }
+                    }
+                }
+
+                if ($key.Key -eq 'Enter') {
                     break
                 }
-                'Escape' {
-                    Write-Host ''
-                    return
-                }
-                'Backspace' {
-                    if ($cursor -gt 0) {
-                        $command = $command.Remove($cursor - 1, 1)
-                        $cursor--
-                    }
-                }
-                'Delete' {
-                    if ($cursor -lt $command.Length) {
-                        $command = $command.Remove($cursor, 1)
-                    }
-                }
-                'LeftArrow' {
-                    if ($cursor -gt 0) { $cursor-- }
-                }
-                'RightArrow' {
-                    if ($cursor -lt $command.Length) { $cursor++ }
-                }
-                'Home' {
-                    $cursor = 0
-                }
-                'End' {
-                    $cursor = $command.Length
-                }
-                default {
-                    if (-not [char]::IsControl($key.KeyChar)) {
-                        $command = $command.Insert(
-                            $cursor,
-                            [string]$key.KeyChar
-                        )
-                        $cursor++
-                    }
-                }
-            }
-
-            if ($key.Key -eq 'Enter') {
-                break
             }
         }
 
@@ -239,6 +273,39 @@ function cmdnav {
             Write-Error $_
         }
     }
+}
+
+function Edit-ProjectCommands {
+    $path = "./$projectCommandsFile"
+
+    if (-not (Test-Path $path)) {
+        $commands = @(
+            @{
+                Name     = 'My Project'
+                Children = @(
+                    @{
+                        Name    = 'List first 10 items'
+                        Command = 'Get-ChildItem | Select-Object -First 10'
+                    }
+                )
+            }
+        )
+
+        ConvertTo-Json -InputObject $commands -Depth 10 |
+        Set-Content -Path $path -Encoding utf8
+    }
+
+    Start-Process -FilePath $path -Verb Open
+}
+
+function Open-SharedCommands {
+    $path = Join-Path $PSScriptRoot $commandsFile
+    Start-Process -FilePath $path -Verb Open
+}
+
+function Open-Settings {
+    $path = Join-Path $PSScriptRoot $settingsFile
+    Start-Process -FilePath $path -Verb Open
 }
 
 # Export the function from the module

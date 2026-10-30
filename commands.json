@@ -1,5 +1,5 @@
 [
-   {
+  {
     "Name": "Network",
     "Children": [
       {
@@ -16,7 +16,7 @@
       }
     ]
   },
-   {
+  {
     "Name": "System",
     "Children": [
       {
@@ -34,15 +34,22 @@
     ]
   },
   {
-    "Name": "CMDNav",
+    "Name": "Command Navigator",
     "Children": [
       {
         "Name": "Open shared commands",
-        "Command": "Start-Process -FilePath (Join-Path (Get-Module CommandNavigator).ModuleBase 'commands.json') -Verb Open"
+        "Editable": false,
+        "Command": "Open-SharedCommands"
       },
       {
-        "Name": "Open Settings",
-        "Command": "Start-Process -FilePath (Join-Path (Get-Module CommandNavigator).ModuleBase 'settings.json') -Verb Open"
+        "Name": "Create or edit project commands",
+        "Editable": false,
+        "Command": "Edit-ProjectCommands"
+      },
+      {
+        "Name": "Open settings",
+        "Editable": false,
+        "Command": "Open-Settings"
       }
     ]
   }
