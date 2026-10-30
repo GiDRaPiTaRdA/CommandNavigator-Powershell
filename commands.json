@@ -1,0 +1,67 @@
+[
+   {
+    "Name": "Custom",
+    "Children": [
+      {
+        "Name": "Google",
+        "Children": [
+          {
+            "Name": "Kill",
+            "Command": "az vm list --output table"
+          },
+          {
+            "Name": "Light Theme",
+            "Command": "chromelightmode -Mode light"
+          },
+             {
+            "Name": "Dark Theme",
+            "Command": "chromelightmode -Mode dark"
+          }
+        ]
+      },
+       {
+        "Name": "Device",
+        "Children": [
+          {
+            "Name": "Disable GPU",
+            "Command": "device -DeviceName 'NVIDIA GeForce GTX 1050' -Action 'disable'"
+          },
+          {
+            "Name": "Enable GPU",
+            "Command": "device -DeviceName 'NVIDIA GeForce GTX 1050' -Action 'disable'"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Docker",
+    "Children": [
+       {
+        "Name": "Start Desktop",
+        "Command": "docker desktop start"
+      },
+      {
+        "Name": "List containers",
+        "Command": "docker ps -a"
+      },
+      {
+        "Name": "List images",
+        "Command": "docker images"
+      }
+    ]
+  },
+  {
+    "Name": "CMDNav",
+    "Children": [
+      {
+        "Name": "Open shared commands",
+        "Command": "Start-Process -FilePath (Join-Path (Get-Module CommandNavigator).ModuleBase 'commands.json') -Verb Open"
+      },
+      {
+        "Name": "Open Settings",
+        "Command": "Start-Process -FilePath (Join-Path (Get-Module CommandNavigator).ModuleBase 'settings.json') -Verb Open"
+      }
+    ]
+  }
+]
