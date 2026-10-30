@@ -47,7 +47,6 @@ function cmdnav {
             Children = $projectTree
         }
 
-        # Always include shared commands
         $tree += @{
             Name     = 'System'
             Children = $sharedTree
@@ -57,8 +56,6 @@ function cmdnav {
         # Always include shared commands
         $tree = $sharedTree
     }
-
-
 
     $stack = [System.Collections.Generic.List[object]]::new()
     $items = $tree

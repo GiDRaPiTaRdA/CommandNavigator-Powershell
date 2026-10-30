@@ -1,53 +1,35 @@
 [
    {
-    "Name": "Custom",
+    "Name": "Network",
     "Children": [
       {
-        "Name": "Google",
-        "Children": [
-          {
-            "Name": "Kill",
-            "Command": "az vm list --output table"
-          },
-          {
-            "Name": "Light Theme",
-            "Command": "chromelightmode -Mode light"
-          },
-             {
-            "Name": "Dark Theme",
-            "Command": "chromelightmode -Mode dark"
-          }
-        ]
+        "Name": "IP configuration",
+        "Command": "Get-NetIPConfiguration"
       },
-       {
-        "Name": "Device",
-        "Children": [
-          {
-            "Name": "Disable GPU",
-            "Command": "device -DeviceName 'NVIDIA GeForce GTX 1050' -Action 'disable'"
-          },
-          {
-            "Name": "Enable GPU",
-            "Command": "device -DeviceName 'NVIDIA GeForce GTX 1050' -Action 'disable'"
-          }
-        ]
+      {
+        "Name": "Network adapters",
+        "Command": "Get-NetAdapter"
+      },
+      {
+        "Name": "DNS cache",
+        "Command": "Get-DnsClientCache"
       }
     ]
   },
-  {
-    "Name": "Docker",
+   {
+    "Name": "System",
     "Children": [
-       {
-        "Name": "Start Desktop",
-        "Command": "docker desktop start"
+      {
+        "Name": "Computer information",
+        "Command": "Get-ComputerInfo | Select-Object CsName, WindowsProductName, OsVersion"
       },
       {
-        "Name": "List containers",
-        "Command": "docker ps -a"
+        "Name": "Running processes",
+        "Command": "Get-Process | Select-Object -First 10"
       },
       {
-        "Name": "List images",
-        "Command": "docker images"
+        "Name": "Windows services",
+        "Command": "Get-Service | Select-Object -First 10"
       }
     ]
   },
