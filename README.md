@@ -1,57 +1,53 @@
 # CommandNavigator
 
-A keyboard-first command menu for **PowerShell 7+**. Browse command folders in your terminal, optionally edit a command, and press **Enter** to run it.
+**Run your favorite PowerShell commands without memorizing them.** CommandNavigator is a keyboard-driven menu that lets you browse commands, edit them when needed, and run them from your current directory.
 
 ![CommandNavigator preview](images/preview.png)
 
-## Install
+## Get started
+
+Install with PowerShell 7+:
 
 ```powershell
 Install-PSResource CommandNavigator -Scope CurrentUser
 cmdnav
 ```
 
-For local development:
+Run `cmdnav` whenever you want to open the command menu.
 
-```powershell
-Import-Module .\CommandNavigator.psd1 -Force
-cmdnav
-```
+## Using the menu
 
-Requires a terminal supporting ANSI escape sequences. Commands using external programs require those programs to be installed.
-
-## Navigation
+1. Use **Up / Down** to highlight a folder or command.
+2. Press **Enter** or **Right** to open a folder or select a command.
+3. If the command is editable, change it at the `PS>` prompt and press **Enter** to execute.
+4. Your command runs in the current PowerShell session and directory. Its output remains visible after the menu closes.
 
 | Key | Action |
 | --- | --- |
-| `Up` / `Down` | Select item |
-| `Enter` / `Right` | Open folder or select command |
-| `Left` / `Backspace` | Return to parent folder |
-| `Esc` / `Q` | Exit menu |
+| `↑` / `↓` | Move through commands |
+| `Enter` / `→` | Open a folder or select a command |
+| `←` / `Backspace` | Go back to the parent folder |
+| `Esc` / `Q` | Close the menu |
 
-In the command editor, use arrow keys, **Home/End**, **Backspace/Delete**, and typing. Long commands wrap across terminal lines. **Enter** runs the command; **Esc** cancels. A command with `"Editable": false` runs without opening the editor.
+While editing a command, use **Left / Right**, **Home / End**, **Backspace / Delete**, and normal typing. Long commands wrap across terminal lines. Press **Enter** to run or **Esc** to cancel. Some commands run immediately without editing.
 
-## Configuration
+## What's in the menu?
 
-The module bundles default `commands.json` and `settings.json`. On first run, CommandNavigator copies missing files to:
+The default shared commands include:
 
-```text
-%LOCALAPPDATA%\CommandNavigator\
-├── commands.json
-└── settings.json
-```
+- **Network** — IP configuration, network adapters, DNS cache.
+- **System** — Computer information, running processes, Windows services.
+- **Command Navigator** — Create or edit project commands, open shared commands, edit settings, open the configuration folder, or reset configuration.
 
-**Edit the AppData copies**, not the installed module files. Updates preserve existing user configuration. Deleting a configuration file causes it to be recreated from the bundled default on the next launch.
+You can add your own commands to the shared menu or create different commands for each project.
 
-### Shared commands
+## Your own commands
 
-Shared commands are available in every directory. The bundled `commands.json` contains three folders:
+### Shared commands (available everywhere)
 
-- **Network:** IP configuration, network adapters, DNS cache.
-- **System:** Computer information, running processes (first 10), Windows services (first 10).
-- **Command Navigator:** Create or edit project commands, System commands, Settings, Open config dir, Reset configuration.
+In `cmdnav`, open **Command Navigator → System commands** to edit your shared command list. These commands appear regardless of your current directory.
 
-A folder has `Name` and `Children`; an executable item has `Name` and `Command`. Optionally set `Editable` to `true` or `false` to override the global editor setting for that command:
+For example, add a Git folder to `commands.json`:
 
 ```json
 [
@@ -59,51 +55,60 @@ A folder has `Name` and `Children`; an executable item has `Name` and `Command`.
     "Name": "Git",
     "Children": [
       { "Name": "Status", "Command": "git status" },
-      { "Name": "Current branch", "Command": "git branch --show-current", "Editable": false }
+      { "Name": "Current branch", "Command": "git branch --show-current" }
     ]
   }
 ]
 ```
 
-### Project commands
+This is an example of the JSON structure; add it alongside your existing folders rather than replacing them unless you want to.
 
-Use **Command Navigator → Create or edit project commands** to create and open `nav_commands.json` in the **current directory**, if it doesn't already exist. The file is initialized from the bundled `projectCommands.json` template:
+### Project commands (only in the current directory)
 
-```json
-[
-  {
-    "Name": "My Project",
-    "Children": [
-      { "Name": "List first 10 items", "Command": "Get-ChildItem | Select-Object -First 10" },
-      { "Name": "Echo Hello World", "Command": "Write-Host 'Hello World'" }
-    ]
-  }
-]
-```
+1. Open PowerShell in your project folder.
+2. Run `cmdnav`.
+3. Select **Command Navigator → Create or edit project commands**.
+4. CommandNavigator creates `nav_commands.json` if needed and opens it for editing.
 
-CommandNavigator reads project commands only from the **exact current working directory** (it does not search parent folders). When a project file exists, shared commands appear under an additional **System** folder.
+The starter file includes two example commands: **List first 10 items** and **Echo Hello World**. Replace or extend them with your project's build, test, Git, or deployment commands.
 
-### Settings
+Project commands are loaded only from the **exact current directory**; parent directories are not searched. When a project file exists, the shared menu appears under **System**.
 
-The default `settings.json` is:
+### Run without editing
+
+Add `"Editable": false` to a command to execute it directly when selected:
 
 ```json
 {
-  "WriteHistory": false,
-  "EditableCommands": true,
-  "UseConsoleEditor": true
+  "Name": "Git status",
+  "Command": "git status",
+  "Editable": false
 }
 ```
 
-| Setting | Behavior |
-| --- | --- |
-| `WriteHistory` | Explicitly add executed commands to PSReadLine history when enabled |
-| `EditableCommands` | Show the command editor by default; individual `Editable` values override it |
-| `UseConsoleEditor` | Use the terminal `edit` command to open JSON files; when `false`, use the Windows default application |
+If `Editable` is omitted, the global **EditableCommands** setting applies.
 
-`UseConsoleEditor: true` requires Microsoft Edit (`edit`) to be installed. The **Command Navigator** menu provides shortcuts to edit shared commands and settings, open the config folder, or reset configuration.
+## Settings and configuration
 
-**Warning:** **Reset configuration** deletes the AppData configuration folder and your customizations. The bundled defaults are copied again on the next `cmdnav` run.
+Choose **Command Navigator → Settings** to change these options:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `WriteHistory` | `false` | Adds selected commands to PSReadLine history when enabled |
+| `EditableCommands` | `true` | Opens the command editor by default |
+| `UseConsoleEditor` | `true` | Opens JSON files in the terminal using Microsoft Edit (`edit`); set to `false` to use the Windows default application |
+
+Shared commands and settings are stored in:
+
+```text
+%LOCALAPPDATA%\CommandNavigator\
+├── commands.json
+└── settings.json
+```
+
+CommandNavigator copies the bundled defaults here on first use. **Module updates preserve your customizations.** Use **Open config dir** to browse these files.
+
+**Reset configuration** deletes your saved shared commands and settings. Defaults are recreated the next time you run `cmdnav`, so back up any customizations first.
 
 ## Update
 
@@ -111,8 +116,6 @@ The default `settings.json` is:
 Update-PSResource CommandNavigator
 ```
 
-Restart PowerShell or reload the module to use the updated version. Your AppData files are preserved, so review new bundled defaults if a release changes the configuration format.
+Restart PowerShell or reload the module to use the updated version. If a release adds new configuration options, compare your saved settings with the latest bundled defaults.
 
-## Security
-
-Commands in JSON files are executed as PowerShell code. Review files from other projects before running their commands, and avoid storing secrets in command strings or command history.
+> **Safety:** Commands in JSON files execute PowerShell code. Review project command files before running them, especially in repositories you don't trust.
