@@ -36,20 +36,30 @@
   {
     "Name": "Command Navigator",
     "Children": [
-      {
-        "Name": "Open shared commands",
-        "Editable": false,
-        "Command": "Open-SharedCommands"
-      },
-      {
+       {
         "Name": "Create or edit project commands",
         "Editable": false,
         "Command": "Edit-ProjectCommands"
       },
       {
-        "Name": "Open settings",
+        "Name": "System commands",
+        "Editable": false,
+        "Command": "Open-SharedCommands"
+      },
+      {
+        "Name": "Settings",
         "Editable": false,
         "Command": "Open-Settings"
+      },
+      {
+        "Name": "Open config dir",
+        "Editable": false,
+        "Command": "Open-ConfigFolder"
+      },
+      {
+        "Name": "Reset configuration",
+        "Editable": false,
+        "Command": "Remove-ConfigFolder"
       }
     ]
   }

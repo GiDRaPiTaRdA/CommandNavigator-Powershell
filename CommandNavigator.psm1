@@ -8,35 +8,44 @@ function cmdnav {
 
     $settingsFile = 'settings.json'
     $commandsFile = 'commands.json'
-    $projectCommandsFile = 'commands.json'
+    $projectCommandsFile = 'nav_commands.json'
+    $configDir = Join-Path $env:LOCALAPPDATA 'CommandNavigator'
 
+    # Ensure the configuration directory exists
+    if (-not (Test-Path $configDir)) {
+        New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+    }
+
+    # Ensure the configuration files exist in the configuration directory
+    foreach ($file in @($commandsFile, $settingsFile)) {
+        $destination = Join-Path $configDir $file
+
+        if (-not (Test-Path $destination)) {
+            Copy-Item (Join-Path $PSScriptRoot $file) $destination
+        }
+    }
+
+      # Load commands.json from the script's directory
+    $configPath = Join-Path $configDir $commandsFile
+    $settingsPath = Join-Path $configDir $settingsFile
+    $projectPath = Join-Path (Get-Location).ProviderPath $projectCommandsFile
 
     # Configuration
-    $settings = Get-Content (Join-Path $PSScriptRoot $settingsFile) -Raw | ConvertFrom-Json
+    $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
 
     $addToHistory = $settings.WriteHistory -ne $false
     $editableCommands = $settings.EditableCommands -ne $false
+    $useConsoleEditor = $settings.UseConsoleEditor -ne $false
 
-    # Load commands.json from the script's directory
-    $configPath = Join-Path $PSScriptRoot $commandsFile
-
-    if (-not (Test-Path -LiteralPath $configPath)) {
-        throw "Commands file not found: $configPath"
-    }
-
-    # Shared commands, located beside CommandNavigator.ps1
-    $sharedPath = Join-Path $PSScriptRoot $commandsFile
-
+    # Load shared commands
     $sharedTree = @(
-        Get-Content -LiteralPath $sharedPath -Raw |
+        Get-Content -LiteralPath $configPath -Raw |
         ConvertFrom-Json -AsHashtable
     )
 
     $tree = @()
 
-    # Project commands, only from the current directory
-    $projectPath = Join-Path (Get-Location).ProviderPath $projectCommandsFile
-
+    #  Load project-specific commands if available
     if (Test-Path -LiteralPath $projectPath -PathType Leaf) {
         $projectTree = @(
             Get-Content -LiteralPath $projectPath -Raw |
@@ -144,8 +153,6 @@ function cmdnav {
     }
 
     if ($selectedCommand) {
-     
-
         $command = [string]$selectedCommand
 
         # Determine if the command is editable based on the node's 'Editable' property or the default editable commands list
@@ -249,9 +256,8 @@ function cmdnav {
                     break
                 }
             }
+            Write-Host ''
         }
-
-        Write-Host ''
 
         if ([string]::IsNullOrWhiteSpace($command)) {
             return
@@ -262,7 +268,9 @@ function cmdnav {
             return
         }
 
+        # Execute the command within a try-catch block to handle errors gracefully
         try {
+            # Add the command to the history if required
             if ($addToHistory) {
                 [Microsoft.PowerShell.PSConsoleReadLine]::AddToHistory($command)
             }
@@ -279,33 +287,43 @@ function Edit-ProjectCommands {
     $path = "./$projectCommandsFile"
 
     if (-not (Test-Path $path)) {
-        $commands = @(
-            @{
-                Name     = 'My Project'
-                Children = @(
-                    @{
-                        Name    = 'List first 10 items'
-                        Command = 'Get-ChildItem | Select-Object -First 10'
-                    }
-                )
-            }
-        )
-
-        ConvertTo-Json -InputObject $commands -Depth 10 |
-        Set-Content -Path $path -Encoding utf8
+        Copy-Item -Path (Join-Path $PSScriptRoot 'projectCommands.json') -Destination $path
     }
 
-    Start-Process -FilePath $path -Verb Open
+    Open-File -path $path
 }
 
 function Open-SharedCommands {
-    $path = Join-Path $PSScriptRoot $commandsFile
-    Start-Process -FilePath $path -Verb Open
+    Open-File -path $configPath
 }
 
 function Open-Settings {
-    $path = Join-Path $PSScriptRoot $settingsFile
-    Start-Process -FilePath $path -Verb Open
+    Open-File -path $settingsPath
+}
+
+function Open-File(){
+    param (
+        [string]$path
+    )
+
+    if (Test-Path $path) {
+        if($useConsoleEditor) {
+            edit $path
+        }
+        else {
+            Start-Process -FilePath $path -Verb Open
+        }
+    }
+}
+
+function Open-ConfigFolder {
+    Start-Process -FilePath $configDir
+}
+
+function Remove-ConfigFolder {
+    if (Test-Path $configDir) {
+        Remove-Item -LiteralPath $configDir -Recurse -Force
+    }
 }
 
 # Export the function from the module

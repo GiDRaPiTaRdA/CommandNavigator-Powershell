@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "My Project",
+    "Children": [
+      {
+        "Name": "List first 10 items",
+        "Command": "Get-ChildItem | Select-Object -First 10"
+      },
+      {
+        "Name": "Echo Hello World",
+        "Command": "Write-Host 'Hello World'"
+      }
+    ]
+  }
+]
