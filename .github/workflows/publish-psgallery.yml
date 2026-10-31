@@ -28,7 +28,7 @@ jobs:
           $stage = Join-Path $env:RUNNER_TEMP 'CommandNavigator'
           New-Item -ItemType Directory -Path $stage -Force | Out-Null
 
-          $files = @('CommandNavigator.psm1', 'CommandNavigator.psd1', 'commands.json', 'settings.json')
+          $files = @('CommandNavigator.psm1', 'CommandNavigator.psd1', 'commands.json', 'settings.json', 'projectCommands.json')
           foreach ($file in $files) {
             $from = Join-Path $source $file
             if (-not (Test-Path -LiteralPath $from -PathType Leaf)) {
@@ -42,7 +42,7 @@ jobs:
           Write-Host "Validated CommandNavigator $($manifest.Version)"
 
           # Check JSON syntax (does not execute commands).
-          foreach ($file in @('commands.json', 'settings.json')) {
+          foreach ($file in @('commands.json', 'settings.json', 'projectCommands.json')) {
             $null = Get-Content (Join-Path $stage $file) -Raw | ConvertFrom-Json -ErrorAction Stop
           }
 
