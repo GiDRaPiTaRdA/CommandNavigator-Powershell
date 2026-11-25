@@ -63,6 +63,21 @@ For example, add a Git folder to `commands.json`:
 
 This is an example of the JSON structure; add it alongside your existing folders rather than replacing them unless you want to.
 
+The `Command` property can also be an array of command fragments. They are joined with spaces into one command before display, editing, and execution:
+
+```json
+{
+  "Name": "First processes",
+  "Command": [
+    "Get-Process",
+    "| Select-Object",
+    "-First 10"
+  ]
+}
+```
+
+This runs as `Get-Process | Select-Object -First 10`. If you want separate statements, include a separator such as `;` in the fragments. Both formats work in shared and project command files.
+
 ### Project commands (only in the current directory)
 
 1. Open PowerShell in your project folder.

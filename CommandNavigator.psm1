@@ -2,6 +2,25 @@
 # Load once per session: . "$HOME\CommandNavigator.ps1"
 # Then run: cmdnav
 
+function ConvertTo-CommandText {
+    param([object]$Value)
+
+    if ($Value -is [string]) {
+        return $Value
+    }
+
+    if ($Value -is [array]) {
+        foreach ($line in $Value) {
+            if ($line -isnot [string]) {
+                throw 'Command arrays must contain only strings.'
+            }
+        }
+        return [string]::Join(' ', [string[]]$Value)
+    }
+
+    throw 'Command must be a string or an array of strings.'
+}
+
 function cmdnav {
     [CmdletBinding()]
     param()
@@ -100,7 +119,7 @@ function cmdnav {
             Write-Host ''
             if ($visible.Count -and -not $visible[$selection].ContainsKey('Children')) {
                 Write-Host ' Command:' -ForegroundColor DarkCyan
-                Write-Host " $($visible[$selection].Command)" -ForegroundColor Yellow
+                Write-Host " $(ConvertTo-CommandText $visible[$selection].Command)" -ForegroundColor Yellow
             }
             Write-Host ''
             Write-Host ' Up/Down  navigate     Enter/Right  open or run'
@@ -137,7 +156,7 @@ function cmdnav {
                             $filter = ''
                         }
                         elseif ($key.Key -eq 'Enter') {
-                            $selectedCommand = [string]$node.Command
+                            $selectedCommand = ConvertTo-CommandText $node.Command
                             $quit = $true
                         }
                     }
