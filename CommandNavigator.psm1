@@ -1,6 +1,6 @@
 # Command Navigator - keyboard-first PowerShell command tree
 # Load once per session: . "$HOME\CommandNavigator.ps1"
-# Then run: cmdnav
+# Then run: cheatshell
 
 function ConvertTo-CommandText {
     param([object]$Value)
@@ -21,13 +21,13 @@ function ConvertTo-CommandText {
     throw 'Command must be a string or an array of strings.'
 }
 
-function cmdnav {
+function cheatshell {
     [CmdletBinding()]
     param()
 
     $settingsFile = 'settings.json'
     $commandsFile = 'commands.json'
-    $projectCommandsFile = 'nav_commands.json'
+    $projectCommandsFile = 'cheatfile.json'
     $configDir = Join-Path $env:LOCALAPPDATA 'CommandNavigator'
 
     # Ensure the configuration directory exists
@@ -98,7 +98,7 @@ function cmdnav {
             $visible = @($items)
             if ($selection -ge $visible.Count) { $selection = [Math]::Max(0, $visible.Count - 1) }
             Clear-Host
-            Write-Host ' COMMAND NAVIGATOR' -ForegroundColor Cyan
+            Write-Host ' CHEAT SHELL MENU' -ForegroundColor Cyan
             $breadcrumb = if ($stack.Count) { ($stack | ForEach-Object { $_.Name }) -join ' / ' } else { 'Home' }
             Write-Host " $breadcrumb" -ForegroundColor DarkCyan
             Write-Host ' ------------------------------------------------'
@@ -346,4 +346,4 @@ function Remove-ConfigFolder {
 }
 
 # Export the function from the module
-Export-ModuleMember -Function cmdnav
+Export-ModuleMember -Function cheatshell

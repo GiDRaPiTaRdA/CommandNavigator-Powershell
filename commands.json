@@ -34,7 +34,7 @@
     ]
   },
   {
-    "Name": "Command Navigator",
+    "Name": "Cheat Shell",
     "Children": [
        {
         "Name": "Create or edit project commands",

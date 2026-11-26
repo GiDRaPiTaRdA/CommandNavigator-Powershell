@@ -10,10 +10,10 @@ Install with PowerShell 7+:
 
 ```powershell
 Install-PSResource CommandNavigator -Scope CurrentUser
-cmdnav
+cheatshell
 ```
 
-Run `cmdnav` whenever you want to open the command menu.
+Run `cheatshell` whenever you want to open the command menu.
 
 ## Using the menu
 
@@ -45,7 +45,7 @@ You can add your own commands to the shared menu or create different commands fo
 
 ### Shared commands (available everywhere)
 
-In `cmdnav`, open **Command Navigator → System commands** to edit your shared command list. These commands appear regardless of your current directory.
+In `cheatshell`, open **Command Navigator → System commands** to edit your shared command list. These commands appear regardless of your current directory.
 
 For example, add a Git folder to `commands.json`:
 
@@ -81,9 +81,9 @@ This runs as `Get-Process | Select-Object -First 10`. If you want separate state
 ### Project commands (only in the current directory)
 
 1. Open PowerShell in your project folder.
-2. Run `cmdnav`.
+2. Run `cheatshell`.
 3. Select **Command Navigator → Create or edit project commands**.
-4. CommandNavigator creates `nav_commands.json` if needed and opens it for editing.
+4. CommandNavigator creates `cheatfile.json` if needed and opens it for editing.
 
 The starter file includes two example commands: **List first 10 items** and **Echo Hello World**. Replace or extend them with your project's build, test, Git, or deployment commands.
 
@@ -123,7 +123,7 @@ Shared commands and settings are stored in:
 
 CommandNavigator copies the bundled defaults here on first use. **Module updates preserve your customizations.** Use **Open config dir** to browse these files.
 
-**Reset configuration** deletes your saved shared commands and settings. Defaults are recreated the next time you run `cmdnav`, so back up any customizations first.
+**Reset configuration** deletes your saved shared commands and settings. Defaults are recreated the next time you run `cheatshell`, so back up any customizations first.
 
 ## Update
 
