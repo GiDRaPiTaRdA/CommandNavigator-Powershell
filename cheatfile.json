@@ -1,0 +1,11 @@
+[
+  {
+    "Name": "Git",
+    "Children": [
+      {
+        "Name": "Push release",
+        "Command": "git push origin master:release"
+      }
+    ]
+  }
+]
